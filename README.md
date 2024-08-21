@@ -1,5 +1,8 @@
 # Unity ML Walking Agent 
 
+![Initial](https://github.com/user-attachments/assets/cb34ef31-ee08-4f09-8b13-a63e024fa21f)
+
+
 
 ## ML-Agents Setup with Conda and Unity
 
