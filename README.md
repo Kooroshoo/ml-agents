@@ -8,6 +8,8 @@
 
 Using Unity 2022.3 LTS
 
+ML-Agents Release 21
+
 ### 1. Create Conda Environment
 Create a new Conda environment with Python 3.9.18:
 
