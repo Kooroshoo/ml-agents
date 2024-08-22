@@ -41,6 +41,18 @@
 
 ---
 
+### Reward System
+
+- **Standing Reward:** The agent receives a reward based on how upright it remains. This is calculated as the dot product of the agent's `hips.up` and `Vector3.up`, encouraging the agent to maintain an upright posture.
+
+- **Forward Movement Reward:** Although currently commented out, the reward for moving forward can be implemented as the dot product of the agent's `hips.forward` and `Vector3.forward`, promoting forward locomotion.
+
+- **Head Position Reward:** The agent receives additional reward for keeping its head upright, measured by the dot product of the `head.up` and `Vector3.up`.
+
+These rewards aim to incentivize the agent to stand upright and move forward, helping it learn effective walking behavior over time.
+
+---
+
 ### Other Config
 ```yml
 behaviors:
@@ -72,9 +84,7 @@ behaviors:
 
 ```
 
----
-
-## ML-Agents Setup with Conda and Unity
+# ML-Agents Setup with Conda and Unity
 
 Using Unity 2022.3 LTS
 
@@ -123,5 +133,11 @@ To train:
 
 ```bash
 mlagents-learn config/walker-agent.yaml --run-id=walker-agent --force
+```
+
+To continue from a prevoius trained model:
+
+``` bash
+mlagents-learn config/walker-agent.yaml --initialize-from=walker-agent --run-id=walker-agent --force
 ```
 
