@@ -1,8 +1,78 @@
-# Unity ML Walking Agent 
+# WalkerAgent Documentation
+
+#### Initial Scenario:
 
 ![Initial](https://github.com/user-attachments/assets/cb34ef31-ee08-4f09-8b13-a63e024fa21f)
 
+#### Train to Stand: 
 
+#### Train to Walk Forward:
+
+## Training the Environment
+
+### Observation Space
+
+#### Body Part Observations
+- **Position:** `16 body parts × 3 coordinates = 48 values`
+- **Rotation:** `16 body parts × 4 values = 64 values`
+- **Velocity:** `16 body parts × 3 values = 48 values`
+- **Angular Velocity:** `16 body parts × 3 values = 48 values`
+
+**Total for Body Parts:** `208 values`
+
+#### Joint Spring Observations (stiffness)
+- **Spring Value:** `16 joints`
+
+**Total for Joints:** `16 values`
+
+**Overall Observation Size:** `224 values` (including padding if needed)
+
+---
+
+### Action Space
+
+#### Torque Actions
+- **Torque per Body Part:** `16 body parts × 3 directions = 48 values`
+
+#### Spring Actions
+- **Spring Adjustment per Joint:** `16 joints`
+
+**Total Action Space Size:** `64 values`
+
+---
+
+### Other Config
+```yml
+behaviors:
+  walker-agent:                 # Identifier for the agent's behavior configuration
+    trainer_type: ppo           # The RL algorithm to use; PPO stands for Proximal Policy Optimization
+
+    hyperparameters:            # Parameters for the PPO algorithm
+      batch_size: 2048          # Number of samples to process in each training step
+      buffer_size: 20480        # Size of the buffer storing experiences for training
+      learning_rate: 0.0001     # Learning rate for the optimizer
+      beta: 0.001               # Weight for the entropy term in the loss function
+      epsilon: 0.15             # Epsilon for the clipping function in PPO
+      lambd: 0.95               # Discount factor for rewards in Generalized Advantage Estimation (GAE)
+      num_epoch: 5              # Number of epochs to train on each batch
+
+    network_settings:           # Configuration for the neural network used in the policy
+      normalize: True           # Whether to normalize inputs to the network
+      hidden_units: 256         # Number of hidden units per layer in the network
+      num_layers: 2             # Number of layers in the network
+      vis_encode_type: simple   # Type of visual encoding (e.g., simple, nature_cnn)
+
+    reward_signals:             # Configuration for reward signals used in training
+      extrinsic:                # Extrinsic reward signal configuration
+        gamma: 0.99             # Discount factor for the reward signal
+        strength: 1.0           # Strength of the extrinsic reward signal
+
+    max_steps: 5000000          # Maximum number of steps to run the training
+    summary_freq: 10000         # Frequency (in steps) to save training summaries
+
+```
+
+---
 
 ## ML-Agents Setup with Conda and Unity
 
@@ -46,4 +116,12 @@ python -m pip install ./ml-agents
 mlagents-learn --help
 ```
 If the help information appears, your setup is complete.
+
+---
+
+To train:
+
+```bash
+mlagents-learn config/walker-agent.yaml --run-id=walker-agent --force
+```
 
