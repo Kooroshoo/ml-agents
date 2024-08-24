@@ -92,6 +92,7 @@ public class WalkerAgent : Agent
     {
         CollectBodyPartObservations(sensor);
         CollectJointObservations(sensor);
+        CollectFootObservations(sensor);
     }
 
     private void CollectBodyPartObservations(VectorSensor sensor)
@@ -119,6 +120,22 @@ public class WalkerAgent : Agent
         }
     }
 
+    private void CollectFootObservations(VectorSensor sensor)
+    {
+        RaycastHit hit;
+        foreach (var foot in new Transform[] { footL, footR })
+        {
+            if (Physics.Raycast(foot.position, Vector3.down, out hit, 1f))
+            {
+                sensor.AddObservation(hit.distance); // Distance to ground
+            }
+            else
+            {
+                sensor.AddObservation(1f); // No ground detected nearby
+            }
+        }
+    }
+
     // Apply torque and update joint spring values based on actions received
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -128,31 +145,34 @@ public class WalkerAgent : Agent
         ApplyTorques(torqueActions);
         UpdateJointSprings(springActions);
 
-        RewardForUprightPosition();
+        RewardForLocomotion();
     }
 
     private void ApplyTorques(float[] torqueActions)
     {
-        ApplyTorqueToPart(hips, torqueActions[0], torqueActions[1], torqueActions[2]);
-        ApplyTorqueToPart(chest, torqueActions[3], torqueActions[4], torqueActions[5]);
-        ApplyTorqueToPart(spine, torqueActions[6], torqueActions[7], torqueActions[8]);
-        ApplyTorqueToPart(head, torqueActions[9], torqueActions[10], torqueActions[11]);
+        // Clamp the torque magnitude for stability
+        float clampedTorque = Mathf.Clamp(maxTorqueMagnitude * 0.5f, 0, maxTorqueMagnitude);
 
-        ApplyTorqueToPart(thighL, torqueActions[12], torqueActions[13], torqueActions[14]);
-        ApplyTorqueToPart(shinL, torqueActions[15], torqueActions[16], torqueActions[17]);
-        ApplyTorqueToPart(footL, torqueActions[18], torqueActions[19], torqueActions[20]);
+        ApplyTorqueToPart(hips, torqueActions[0] * clampedTorque, torqueActions[1] * clampedTorque, torqueActions[2] * clampedTorque);
+        ApplyTorqueToPart(chest, torqueActions[3] * clampedTorque, torqueActions[4] * clampedTorque, torqueActions[5] * clampedTorque);
+        ApplyTorqueToPart(spine, torqueActions[6] * clampedTorque, torqueActions[7] * clampedTorque, torqueActions[8] * clampedTorque);
+        ApplyTorqueToPart(head, torqueActions[9] * clampedTorque, torqueActions[10] * clampedTorque, torqueActions[11] * clampedTorque);
 
-        ApplyTorqueToPart(thighR, torqueActions[21], torqueActions[22], torqueActions[23]);
-        ApplyTorqueToPart(shinR, torqueActions[24], torqueActions[25], torqueActions[26]);
-        ApplyTorqueToPart(footR, torqueActions[27], torqueActions[28], torqueActions[29]);
+        ApplyTorqueToPart(thighL, torqueActions[12] * clampedTorque, torqueActions[13] * clampedTorque, torqueActions[14] * clampedTorque);
+        ApplyTorqueToPart(shinL, torqueActions[15] * clampedTorque, torqueActions[16] * clampedTorque, torqueActions[17] * clampedTorque);
+        ApplyTorqueToPart(footL, torqueActions[18] * clampedTorque, torqueActions[19] * clampedTorque, torqueActions[20] * clampedTorque);
 
-        ApplyTorqueToPart(armL, torqueActions[30], torqueActions[31], torqueActions[32]);
-        ApplyTorqueToPart(forearmL, torqueActions[33], torqueActions[34], torqueActions[35]);
-        ApplyTorqueToPart(handL, torqueActions[36], torqueActions[37], torqueActions[38]);
+        ApplyTorqueToPart(thighR, torqueActions[21] * clampedTorque, torqueActions[22] * clampedTorque, torqueActions[23] * clampedTorque);
+        ApplyTorqueToPart(shinR, torqueActions[24] * clampedTorque, torqueActions[25] * clampedTorque, torqueActions[26] * clampedTorque);
+        ApplyTorqueToPart(footR, torqueActions[27] * clampedTorque, torqueActions[28] * clampedTorque, torqueActions[29] * clampedTorque);
 
-        ApplyTorqueToPart(armR, torqueActions[39], torqueActions[40], torqueActions[41]);
-        ApplyTorqueToPart(forearmR, torqueActions[42], torqueActions[43], torqueActions[44]);
-        ApplyTorqueToPart(handR, torqueActions[45], torqueActions[46], torqueActions[47]);
+        ApplyTorqueToPart(armL, torqueActions[30] * clampedTorque, torqueActions[31] * clampedTorque, torqueActions[32] * clampedTorque);
+        ApplyTorqueToPart(forearmL, torqueActions[33] * clampedTorque, torqueActions[34] * clampedTorque, torqueActions[35] * clampedTorque);
+        ApplyTorqueToPart(handL, torqueActions[36] * clampedTorque, torqueActions[37] * clampedTorque, torqueActions[38] * clampedTorque);
+
+        ApplyTorqueToPart(armR, torqueActions[39] * clampedTorque, torqueActions[40] * clampedTorque, torqueActions[41] * clampedTorque);
+        ApplyTorqueToPart(forearmR, torqueActions[42] * clampedTorque, torqueActions[43] * clampedTorque, torqueActions[44] * clampedTorque);
+        ApplyTorqueToPart(handR, torqueActions[45] * clampedTorque, torqueActions[46] * clampedTorque, torqueActions[47] * clampedTorque);
     }
 
     private void UpdateJointSprings(float[] springActions)
@@ -168,54 +188,64 @@ public class WalkerAgent : Agent
         }
     }
 
-    private void RewardForUprightPosition()
+    private void RewardForLocomotion()
     {
-        AddReward(Vector3.Dot(hips.up, Vector3.up));  // Reward for staying upright
-        AddReward(Vector3.Dot(head.up, Vector3.up));  // Reward for keeping head upright
+        // Reward for moving forward based on the velocity of the hips
+        Vector3 localVelocity = hips.InverseTransformDirection(hips.GetComponent<Rigidbody>().velocity);
+        AddReward(localVelocity.z); // Reward for forward motion (along the z-axis)
+
+        // Encourage staying upright
+        AddReward(Vector3.Dot(hips.up, Vector3.up));  // Upright torso
+        AddReward(Vector3.Dot(head.up, Vector3.up));  // Upright head
+
+        // Encourage leg alignment and stability
+        AddReward(Vector3.Dot(thighL.up, Vector3.up));  // Upright left thigh
+        AddReward(Vector3.Dot(thighR.up, Vector3.up));  // Upright right thigh
+        AddReward(Vector3.Dot(shinL.up, Vector3.up));  // Upright left shin
+        AddReward(Vector3.Dot(shinR.up, Vector3.up));  // Upright right shin
+
+        // Penalize for excessive rotation or falling
+        if (hips.localPosition.y < -1f || head.localPosition.y < 1.3f)  // Example threshold for falling
+        {
+            SetReward(-1f);  // Large penalty for falling down
+            EndEpisode();
+        }
     }
 
-    // Reset the agent's position and environment at the start of each episode
+    // Reset the agent to the initial state when a new episode starts
     public override void OnEpisodeBegin()
     {
-        ResetAgent();
+        ResetAgentPosition();
     }
 
-    private void ResetAgent()
+    private void ResetAgentPosition()
     {
         for (int i = 0; i < bodyParts.Length; i++)
         {
             if (bodyParts[i] != null)
             {
-                bodyParts[i].velocity = Vector3.zero;
-                bodyParts[i].angularVelocity = Vector3.zero;
                 bodyParts[i].transform.localPosition = initialPositions[i];
                 bodyParts[i].transform.localRotation = initialRotations[i];
+                bodyParts[i].velocity = Vector3.zero;
+                bodyParts[i].angularVelocity = Vector3.zero;
             }
         }
     }
 
-    // Apply torque to a specific body part based on actions
-    void ApplyTorqueToPart(Transform part, float torqueX, float torqueY, float torqueZ)
+    private void ApplyTorqueToPart(Transform bodyPart, float xTorque, float yTorque, float zTorque)
     {
-        if (part != null)
+        if (bodyPart != null)
         {
-            Rigidbody rb = part.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Vector3 torque = new Vector3(torqueX, torqueY, torqueZ) * maxTorqueMagnitude;
-                rb.AddTorque(torque);
-            }
+            bodyPart.GetComponent<Rigidbody>().AddTorque(new Vector3(xTorque, yTorque, zTorque));
         }
     }
 
-    // Optional: Manual control for testing purposes
+    // Use manual control (optional, for debugging or specific scenarios)
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var continuousActions = actionsOut.ContinuousActions;
-
-        // Example manual control for testing (optional)
+        // Example of manual control, where each axis is controlled by input
         continuousActions[0] = Input.GetAxis("Horizontal");
         continuousActions[1] = Input.GetAxis("Vertical");
-        // Continue adding manual control as needed for testing
     }
 }

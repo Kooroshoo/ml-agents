@@ -548,6 +548,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MLScenario (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -609,6 +613,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MLScenario (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -622,6 +630,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 311166214462766013, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2474236422174002025, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
       propertyPath: m_RootOrder
       value: 2
