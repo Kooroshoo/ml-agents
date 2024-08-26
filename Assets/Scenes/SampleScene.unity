@@ -179,6 +179,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MLScenario (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -239,6 +243,10 @@ PrefabInstance:
     - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
       propertyPath: m_Name
       value: MLScenario (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -395,6 +403,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MLScenario (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 9176742701057888518, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -485,7 +497,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.2536816, y: -0.24129854, z: 0.06550954, w: 0.9344138}
-  m_LocalPosition: {x: 44.82, y: 36.5, z: -39.9}
+  m_LocalPosition: {x: 3.91, y: 9.67, z: -9.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -633,7 +645,7 @@ PrefabInstance:
     - target: {fileID: 311166214462766013, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
       propertyPath: m_Model
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 5022602860645237092, guid: 4051c218d03e8fa4686bf072db6d6171, type: 3}
     - target: {fileID: 2474236422174002025, guid: fc7a1987a92933c4aacd4e5dd1ea0ea8, type: 3}
       propertyPath: m_RootOrder
       value: 2

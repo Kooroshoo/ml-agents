@@ -3,6 +3,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 using System.Linq;
+using System;
 
 public class WalkerAgent : Agent
 {
@@ -36,9 +37,10 @@ public class WalkerAgent : Agent
     private Vector3[] initialPositions;
     private Quaternion[] initialRotations;
 
-    // Action space sizes
+    // Action space sizes (increased by 2 for forward and upward movement)
     public int torqueActionSize = 48;  // 16 body parts * 3 torque directions
     public int springActionSize = 16;  // One for each of 16 joints
+    public int movementActionSize = 2;  // Additional actions for forward and upward movement
 
     // Initialize the agent
     public override void Initialize()
@@ -92,7 +94,6 @@ public class WalkerAgent : Agent
     {
         CollectBodyPartObservations(sensor);
         CollectJointObservations(sensor);
-        CollectFootObservations(sensor);
     }
 
     private void CollectBodyPartObservations(VectorSensor sensor)
@@ -120,30 +121,19 @@ public class WalkerAgent : Agent
         }
     }
 
-    private void CollectFootObservations(VectorSensor sensor)
-    {
-        RaycastHit hit;
-        foreach (var foot in new Transform[] { footL, footR })
-        {
-            if (Physics.Raycast(foot.position, Vector3.down, out hit, 1f))
-            {
-                sensor.AddObservation(hit.distance); // Distance to ground
-            }
-            else
-            {
-                sensor.AddObservation(1f); // No ground detected nearby
-            }
-        }
-    }
-
     // Apply torque and update joint spring values based on actions received
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         float[] torqueActions = actionBuffers.ContinuousActions.Array.Take(torqueActionSize).ToArray();
         float[] springActions = actionBuffers.ContinuousActions.Array.Skip(torqueActionSize).Take(springActionSize).ToArray();
+        float forwardMovementAction = actionBuffers.ContinuousActions.Array[torqueActionSize + springActionSize];
+        float upwardMovementAction = actionBuffers.ContinuousActions.Array[torqueActionSize + springActionSize + 1];
 
         ApplyTorques(torqueActions);
         UpdateJointSprings(springActions);
+
+        // Apply forward and upward forces based on the agent's decision
+        ApplyMovement(forwardMovementAction, upwardMovementAction);
 
         RewardForLocomotion();
     }
@@ -151,7 +141,7 @@ public class WalkerAgent : Agent
     private void ApplyTorques(float[] torqueActions)
     {
         // Clamp the torque magnitude for stability
-        float clampedTorque = Mathf.Clamp(maxTorqueMagnitude * 0.5f, 0, maxTorqueMagnitude);
+        float clampedTorque = Mathf.Clamp(maxTorqueMagnitude * 0.75f, 0, maxTorqueMagnitude);
 
         ApplyTorqueToPart(hips, torqueActions[0] * clampedTorque, torqueActions[1] * clampedTorque, torqueActions[2] * clampedTorque);
         ApplyTorqueToPart(chest, torqueActions[3] * clampedTorque, torqueActions[4] * clampedTorque, torqueActions[5] * clampedTorque);
@@ -188,64 +178,116 @@ public class WalkerAgent : Agent
         }
     }
 
+    // Reward shaping to encourage stepping and lifting one leg at a time
     private void RewardForLocomotion()
     {
-        // Reward for moving forward based on the velocity of the hips
-        Vector3 localVelocity = hips.InverseTransformDirection(hips.GetComponent<Rigidbody>().velocity);
-        AddReward(localVelocity.z); // Reward for forward motion (along the z-axis)
+        // Reward for forward velocity
+        Vector3 velocity = hips.GetComponent<Rigidbody>().velocity;
+        float forwardVelocity = -(velocity.z);
+        AddReward(forwardVelocity * 0.1f); // Reward for moving forward
 
-        // Encourage staying upright
-        AddReward(Vector3.Dot(hips.up, Vector3.up));  // Upright torso
-        AddReward(Vector3.Dot(head.up, Vector3.up));  // Upright head
+        // Penalize for staying stationary
+        float totalVelocity = velocity.magnitude;
+        if (totalVelocity < 0.1f)  // Threshold for being "stationary"
+        {
+            AddReward(-0.01f);  // Small penalty for being stationary
+        }
 
-        // Encourage leg alignment and stability
-        AddReward(Vector3.Dot(thighL.up, Vector3.up));  // Upright left thigh
-        AddReward(Vector3.Dot(thighR.up, Vector3.up));  // Upright right thigh
-        AddReward(Vector3.Dot(shinL.up, Vector3.up));  // Upright left shin
-        AddReward(Vector3.Dot(shinR.up, Vector3.up));  // Upright right shin
-
-        // Penalize for excessive rotation or falling
-        if (hips.localPosition.y < -1f || head.localPosition.y < 1.3f)  // Example threshold for falling
+        // Penalize for low hip height
+        if (hips.position.y < 2.5f)
         {
             SetReward(-1f);  // Large penalty for falling down
             EndEpisode();
         }
+
+        // Penalize for excessive rotation or falling
+        if (head.position.y < 4.5f)  // Example threshold for falling
+        {
+            SetReward(-1f);  // Large penalty for falling down
+            EndEpisode();
+        }
+
+        // Check if the agent is alternating foot steps by rewarding when one foot lifts after the other
+        float footLHeight = footL.position.y;
+        float footRHeight = footR.position.y;
+        if (footLHeight > 0.7f && footRHeight < 0.7f)
+        {
+            AddReward(0.01f);  // Reward for lifting the left foot after the right foot was down
+        }
+        else if (footRHeight > 0.7f && footLHeight < 0.7f)
+        {
+            AddReward(0.01f);  // Reward for lifting the right foot after the left foot was down
+        }
     }
 
-    // Reset the agent to the initial state when a new episode starts
-    public override void OnEpisodeBegin()
+    // Apply forward and upward forces based on the action values
+    private void ApplyMovement(float forwardAction, float upwardAction)
     {
-        ResetAgentPosition();
+        Rigidbody hipsRb = hips.GetComponent<Rigidbody>();
+        if (hipsRb != null)
+        {
+            // Apply forward force (scale based on the action value)
+            Vector3 forwardForce = transform.forward * Mathf.Clamp(forwardAction, -1f, 1f) * 10f; // Adjust force scaling as needed
+            hipsRb.AddForce(forwardForce, ForceMode.Acceleration);
+
+            // Calculate the upward force multiplier based on the hips' Y position
+            float hipsYPosition = hipsRb.position.y;
+            float yThreshold = 3f; // Adjust this threshold based on your environment's needs
+            float upwardForceMultiplier = 10f; // Default upward force multiplier
+
+            // Increase the upward force multiplier if the hips are below the threshold
+            if (hipsYPosition < yThreshold)
+            {
+                upwardForceMultiplier = Mathf.Lerp(30f, 100f, (yThreshold - hipsYPosition) / yThreshold); // Adjust the lerp range as needed
+            }
+
+            // Apply upward force (scale based on the action value and multiplier)
+            Vector3 upwardForce = Vector3.up * Mathf.Clamp(upwardAction, 0f, 1f) * upwardForceMultiplier;
+            hipsRb.AddForce(upwardForce, ForceMode.Acceleration);
+        }
     }
 
-    private void ResetAgentPosition()
+
+    // Reset the agent's position, rotation, and velocity after each episode
+    public override void OnEpisodeBegin()
     {
         for (int i = 0; i < bodyParts.Length; i++)
         {
             if (bodyParts[i] != null)
             {
+                // Reset body parts to their initial positions and rotations
                 bodyParts[i].transform.localPosition = initialPositions[i];
                 bodyParts[i].transform.localRotation = initialRotations[i];
                 bodyParts[i].velocity = Vector3.zero;
                 bodyParts[i].angularVelocity = Vector3.zero;
             }
         }
+
+        // Assign random rotations to the thighs for varied starting rotations
+        float randomThighLRotation = UnityEngine.Random.Range(-90f, 30f);  // Random upward/downward rotation for left thigh
+        float randomThighRRotation = UnityEngine.Random.Range(-90f, 30f);  // Random upward/downward rotation for right thigh
+
+        // Apply the random rotations to the thighs
+        //thighL.transform.localRotation = Quaternion.Euler(randomThighLRotation, thighL.transform.localRotation.eulerAngles.y, thighL.transform.localRotation.eulerAngles.z);
+        //thighR.transform.localRotation = Quaternion.Euler(randomThighRRotation, thighR.transform.localRotation.eulerAngles.y, thighR.transform.localRotation.eulerAngles.z);
+
+        // Assign random rotations to the shins (legs) for varied starting rotations
+        float randomShinLRotation = UnityEngine.Random.Range(0f, 90f);  // Random forward/backward rotation for left shin
+        float randomShinRRotation = UnityEngine.Random.Range(0f, 90f);  // Random forward/backward rotation for right shin
+
+        // Apply the random rotations to the legs (shins)
+        //shinL.transform.localRotation = Quaternion.Euler(randomShinLRotation, shinL.transform.localRotation.eulerAngles.y, shinL.transform.localRotation.eulerAngles.z);
+        //shinR.transform.localRotation = Quaternion.Euler(randomShinRRotation, shinR.transform.localRotation.eulerAngles.y, shinR.transform.localRotation.eulerAngles.z);
+
     }
 
-    private void ApplyTorqueToPart(Transform bodyPart, float xTorque, float yTorque, float zTorque)
+    // Apply torque to a body part
+    private void ApplyTorqueToPart(Transform part, float torqueX, float torqueY, float torqueZ)
     {
-        if (bodyPart != null)
+        if (part != null && part.GetComponent<Rigidbody>() != null)
         {
-            bodyPart.GetComponent<Rigidbody>().AddTorque(new Vector3(xTorque, yTorque, zTorque));
+            Rigidbody rb = part.GetComponent<Rigidbody>();
+            rb.AddTorque(new Vector3(torqueX, torqueY, torqueZ));
         }
-    }
-
-    // Use manual control (optional, for debugging or specific scenarios)
-    public override void Heuristic(in ActionBuffers actionsOut)
-    {
-        var continuousActions = actionsOut.ContinuousActions;
-        // Example of manual control, where each axis is controlled by input
-        continuousActions[0] = Input.GetAxis("Horizontal");
-        continuousActions[1] = Input.GetAxis("Vertical");
     }
 }

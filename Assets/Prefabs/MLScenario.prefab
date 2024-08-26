@@ -214,6 +214,18 @@ PrefabInstance:
       propertyPath: torqueMagnitude
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 4986473811252517784, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
+      propertyPath: movementActionSize
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7357219157237844421, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BehaviorName
       value: walker-agent
@@ -224,7 +236,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BrainParameters.VectorObservationSize
-      value: 226
+      value: 223
       objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BrainParameters.VectorActionSize.Array.size
@@ -232,7 +244,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BrainParameters.VectorActionSize.Array.data[0]
-      value: 64
+      value: 66
       objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BrainParameters.m_ActionSpec.BranchSizes.Array.size
@@ -240,7 +252,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
       propertyPath: m_BrainParameters.m_ActionSpec.m_NumContinuousActions
-      value: 64
+      value: 66
+      objectReference: {fileID: 0}
+    - target: {fileID: 8511051112803958915, guid: b5dbd939098825943b6d26ec3a1a27b2, type: 3}
+      propertyPath: m_BrainParameters.m_ActionSpec.BranchSizes.Array.data[0]
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
