@@ -6,6 +6,8 @@
 
 #### Train to Stand: 
 
+![standing](https://github.com/user-attachments/assets/c5ef113d-3c6a-4cd6-ae77-e64e1b1e0a4f)
+
 #### Train to Walk Forward:
 
 ## Training the Environment
