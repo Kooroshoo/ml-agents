@@ -1,4 +1,16 @@
-# WalkerAgent Documentation
+# WalkerAgent with Unity ML-Agents
+
+This project involves creating and training a walker agent using Unity's ML-Agents toolkit. The walker learns to stand, walk, and balance through reinforcement learning, specifically using the Proximal Policy Optimization (PPO) algorithm.
+
+## Table of Contents
+- [Demo Overview](#Demo-Overview)
+- [Agent Details](#Agent-Details)
+- [Project Setup](#ML-Agents-Setup-with-Conda-and-Unity)
+- [Training](#Training)
+
+<a name="Demo-Overview"/>
+
+## Demo Overview
 
 #### Initial Scenario:
 
@@ -10,9 +22,17 @@
 
 #### Train to Walk Forward:
 
-## Training the Environment
+![walking](https://github.com/user-attachments/assets/8dbbd69b-03ca-4dcd-8962-2a9fe14e263a)
+
+<br/><br/>
+
+<a name="Agent-Details"/>
+
+## Agent Details
 
 ### Observation Space
+
+The agent observes the positions, rotations, velocities, and angular velocities of its body parts, as well as the spring settings of its joints.
 
 #### Body Part Observations
 - **Position:** `16 body parts × 3 coordinates = 48 values`
@@ -27,35 +47,45 @@
 
 **Total for Joints:** `16 values`
 
-**Overall Observation Size:** `224 values` (including padding if needed)
+**Overall Observation Size:** `224 values` 
 
 ---
 
 ### Action Space
 
+The agent applies torque to body parts to control movement, and the torques are clamped for stability. The agent also applies forward and upward forces to simulate walking and stepping. Random rotations are applied at the start of each episode to vary initial conditions.
+
 #### Torque Actions
 - **Torque per Body Part:** `16 body parts × 3 directions = 48 values`
 
-#### Spring Actions
+#### Spring Actions (stiffness)
 - **Spring Adjustment per Joint:** `16 joints`
 
-**Total Action Space Size:** `64 values`
+#### Movement Actions
+- **Forward and upward movement.:** `2 joints`
+
+**Total Action Space Size:** `66 values`
 
 ---
 
 ### Reward System
 
-- **Standing Reward:** The agent receives a reward based on how upright it remains. This is calculated as the dot product of the agent's `hips.up` and `Vector3.up`, encouraging the agent to maintain an upright posture.
+The reward system encourages the agent to Stay upright, Move forward efficiently, Alternate leg movements and Avoid falling.
 
-- **Forward Movement Reward:** Although currently commented out, the reward for moving forward can be implemented as the dot product of the agent's `hips.forward` and `Vector3.forward`, promoting forward locomotion.
+- **Standing Reward:** Stay upright by maintaining a high head position.
 
-- **Head Position Reward:** The agent receives additional reward for keeping its head upright, measured by the dot product of the `head.up` and `Vector3.up`.
+- **Forward Movement Reward:** Move forward efficiently by rewarding forward velocity.
+
+- **Leg movement Reward:** Alternate leg movements, simulating a walking character.
+
+- **Falling Reward:** Avoid falling or excessive rotation by penalizing low hip or head positions.
 
 These rewards aim to incentivize the agent to stand upright and move forward, helping it learn effective walking behavior over time.
 
 ---
 
 ### Other Config
+
 ```yml
 behaviors:
   walker-agent:                 # Identifier for the agent's behavior configuration
@@ -86,11 +116,15 @@ behaviors:
 
 ```
 
-# ML-Agents Setup with Conda and Unity
+<br/><br/>
 
-Using Unity 2022.3 LTS
+<a name="ML-Agents-Setup-with-Conda-and-Unity"/>
 
-ML-Agents Release 21
+## ML-Agents Setup with Conda and Unity
+
+Using **Unity 2022.3 LTS**
+
+ML-Agents **Release 21**
 
 ### 1. Create Conda Environment
 Create a new Conda environment with Python 3.9.18:
@@ -129,17 +163,23 @@ mlagents-learn --help
 ```
 If the help information appears, your setup is complete.
 
----
+<br/><br/>
 
-To train:
+<a name="Training"/>
+
+## Training
+
+To train the *WalkerAgent* from scratch, run the following command:
 
 ```bash
 mlagents-learn config/walker-agent.yaml --run-id=walker-agent --force
 ```
 
-To continue from a prevoius trained model:
+If you want to continue training from a previously saved model, run:
 
 ``` bash
 mlagents-learn config/walker-agent.yaml --initialize-from=walker-agent --run-id=walker-agent --force
 ```
+
+<br/><br/>
 
